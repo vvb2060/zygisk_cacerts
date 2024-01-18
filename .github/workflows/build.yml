@@ -1,0 +1,39 @@
+name: Build
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: "recursive"
+          fetch-depth: 0
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "17"
+
+      - name: Setup Gradle
+        uses: gradle/gradle-build-action@v2
+        with:
+          gradle-home-cache-cleanup: true
+
+      - name: Build with Gradle
+        run: |
+          ./gradlew zipAll
+
+      - name: Upload module
+        uses: actions/upload-artifact@v4
+        with:
+          compression-level: 0
+          name: zygisk_cacerts-${{ github.sha }}
+          path: |
+            module/release/
+            module/build/outputs/native-debug-symbols/

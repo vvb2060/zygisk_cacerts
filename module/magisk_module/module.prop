@@ -1,0 +1,7 @@
+id=zygisk_cacerts
+name=cacerts
+version=${versionName} (${versionCode})
+versionCode=${versionCode}
+author=vvb2060
+description=Replace the root certificate store.
+updateJson=https://github.com/vvb2060/zygisk_cacerts/raw/HEAD/update.json
