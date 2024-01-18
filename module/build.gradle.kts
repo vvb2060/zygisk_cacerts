@@ -80,6 +80,8 @@ androidComponents.onVariants { v ->
 
     val prepareMagiskFilesTask = task("prepareMagiskFiles$variantCapped", Sync::class) {
         group = rootProject.name
+        inputs.property("versionName", verName)
+        inputs.property("versionCode", verCode)
         dependsOn("assemble$variantCapped")
         into(magiskDir)
         from("${rootProject.projectDir}/README.md")
