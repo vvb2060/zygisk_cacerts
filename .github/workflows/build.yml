@@ -21,9 +21,19 @@ jobs:
           java-version: "17"
 
       - name: Setup Gradle
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/actions/setup-gradle@v3
         with:
           gradle-home-cache-cleanup: true
+
+      - name: Configuration Environment
+        shell: bash
+        run: |
+          echo 'android.sdk.channel=3' >> ~/.gradle/gradle.properties
+          echo 'android.native.buildOutput=verbose' >> ~/.gradle/gradle.properties
+          echo 'org.gradle.jvmargs=-Xmx2048m -Dfile.encoding=UTF-8' >> ~/.gradle/gradle.properties
+          echo 'org.gradle.caching=true' >> ~/.gradle/gradle.properties
+          echo 'org.gradle.parallel=true' >> ~/.gradle/gradle.properties
+          echo '84831b9409646a918e30573bab4c9c91346d8abd' > $ANDROID_SDK_ROOT/licenses/android-sdk-preview-license
 
       - name: Build with Gradle
         run: |
