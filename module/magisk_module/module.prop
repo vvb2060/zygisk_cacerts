@@ -1,6 +1,6 @@
 id=zygisk_cacerts
 name=cacerts
-version=${versionName} (${versionCode})
+version=${versionName}
 versionCode=${versionCode}
 author=vvb2060
 description=Replace the root certificate store.

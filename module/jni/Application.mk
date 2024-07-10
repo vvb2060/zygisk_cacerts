@@ -3,6 +3,7 @@ APP_CPPFLAGS     := -std=c++2b
 APP_CONLYFLAGS   := -std=c2x
 APP_STL          := none
 APP_THIN_ARCHIVE := true
+APP_SUPPORT_FLEXIBLE_PAGE_SIZES := true
 
 ifneq ($(NDK_DEBUG),1)
 APP_CFLAGS       += -Werror -Os -flto

@@ -1,63 +1,51 @@
-/*
- * This file is part of LSPosed.
- *
- * LSPosed is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * LSPosed is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with LSPosed.  If not, see <https://www.gnu.org/licenses/>.
- *
- * Copyright (C) 2024 LSPosed Contributors
- */
-
-import com.android.build.api.component.analytics.AnalyticsEnabledApplicationVariant
-import com.android.build.api.variant.impl.ApplicationVariantImpl
-import org.apache.commons.codec.binary.Hex
 import org.apache.tools.ant.filters.FixCrLfFilter
-import org.apache.tools.ant.filters.ReplaceTokens
-import org.bouncycastle.crypto.params.Ed25519PrivateKeyParameters
-import org.bouncycastle.crypto.signers.Ed25519Signer
-import java.nio.ByteBuffer
-import java.nio.ByteOrder
 import java.nio.file.Files
 import java.nio.file.Paths
-import java.security.MessageDigest
 import java.util.Locale
-import java.util.TreeSet
 
 plugins {
     id("com.android.application")
 }
 
-val verCode: Int by rootProject.extra
-val verName: String by rootProject.extra
+val verCode = providers.exec {
+    commandLine("git", "rev-list", "--count", "HEAD")
+}.standardOutput.asText.get().trim().toInt()
+
+val verName = providers.exec {
+    commandLine("git", "describe", "--tags", "--always", "--dirty")
+}.standardOutput.asText.get().trim()
 
 android {
+    compileSdk = 35
+    buildToolsVersion = "35.0.0"
+    ndkVersion = "27.0.11902837"
     namespace = "zygisk.cacerts"
-
     defaultConfig {
+        minSdk = 27
+        targetSdk = 35
+        versionCode = verCode
+        versionName = verName
         externalNativeBuild {
             ndkBuild {
                 arguments += "-j${Runtime.getRuntime().availableProcessors()}"
             }
         }
         ndk {
+            abiFilters += listOf("x86", "x86_64", "armeabi-v7a", "arm64-v8a", "riscv64")
             debugSymbolLevel = "FULL"
-            jobs = Runtime.getRuntime().availableProcessors()
         }
     }
-
     externalNativeBuild {
         ndkBuild {
             path("jni/Android.mk")
         }
+    }
+    lint {
+        checkReleaseBuilds = false
+    }
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 }
 
@@ -65,20 +53,13 @@ val zipAll = task("zipAll", Task::class) {
     group = rootProject.name
 }
 
-androidComponents.onVariants { v ->
-    val variant: ApplicationVariantImpl =
-        if (v is ApplicationVariantImpl) v
-        else (v as AnalyticsEnabledApplicationVariant).delegate as ApplicationVariantImpl
-
-    val variantCapped = variant.name.replaceFirstChar { it.titlecase(Locale.getDefault()) }
-    val variantLowered = variant.name.lowercase(Locale.getDefault())
-    val buildTypeLowered = variant.buildType!!.lowercase(Locale.getDefault())
+androidComponents.onVariants { variant ->
+    val variantCapped = variant.name.replaceFirstChar { it.titlecase(Locale.ROOT) }
+    val variantLowered = variant.name.lowercase(Locale.ROOT)
 
     val magiskDir = layout.buildDirectory.dir("magisk/$variantLowered")
 
-    val zipFileName = "zygisk_cacerts-v$verName-$verCode-$buildTypeLowered.zip"
-
-    val prepareMagiskFilesTask = task("prepareMagiskFiles$variantCapped", Sync::class) {
+    val prepareMagiskFilesTask = tasks.register<Sync>("prepareMagiskFiles$variantCapped") {
         group = rootProject.name
         inputs.property("versionName", verName)
         inputs.property("versionCode", verCode)
@@ -99,7 +80,9 @@ androidComponents.onVariants { v ->
             filter<FixCrLfFilter>("eol" to FixCrLfFilter.CrLf.newInstance("lf"))
         }
         into("lib") {
-            from(layout.buildDirectory.dir("intermediates/stripped_native_libs/$variantLowered/out/lib"))
+            val path = "intermediates/stripped_native_libs/$variantLowered/" +
+                    "strip${variantCapped}DebugSymbols/out/lib"
+            from(layout.buildDirectory.dir(path))
         }
         doLast {
             magiskDir.get().dir("zygisk").asFile.mkdir()
@@ -113,13 +96,17 @@ androidComponents.onVariants { v ->
         }
     }
 
-    val zipTask = task("zip${variantCapped}", Zip::class) {
+    val zipTask = tasks.register<Zip>("zip${variantCapped}") {
         group = rootProject.name
         dependsOn(prepareMagiskFilesTask)
-        archiveFileName.set(zipFileName)
+        archiveBaseName.set(rootProject.name)
+        archiveVersion.set(verName)
+        archiveClassifier.set(variantLowered)
+        archiveExtension.set("zip")
         destinationDirectory.set(file("$projectDir/release"))
         setMetadataCharset("UTF-8")
         isPreserveFileTimestamps = false
+        isReproducibleFileOrder = true
         from(magiskDir)
     }
 

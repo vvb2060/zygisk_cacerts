@@ -1,6 +1,0 @@
-[versions]
-agp = "8.2.1"
-
-[plugins]
-agp-app = { id = "com.android.application", version.ref = "agp" }
-lsplugin-jgit = { id = "org.lsposed.lsplugin.jgit", version = "1.1" }
