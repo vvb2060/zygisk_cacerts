@@ -72,7 +72,7 @@ androidComponents.onVariants { variant ->
         from("$projectDir/magisk_module") {
             include("module.prop")
             expand(
-                "versionName" to "v$verName",
+                "versionName" to verName,
                 "versionCode" to verCode,
             )
             filteringCharset = "UTF-8"
