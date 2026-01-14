@@ -1,6 +1,6 @@
 {
-  "version": "1.1",
-  "versionCode": 8,
-  "zipUrl": "https://github.com/vvb2060/zygisk_cacerts/releases/download/v1.1/zygisk_cacerts-v1.1-release.zip",
+  "version": "v1.2",
+  "versionCode": 12,
+  "zipUrl": "https://github.com/vvb2060/zygisk_cacerts/releases/download/v1.2/zygisk_cacerts-v1.2-release.zip",
   "changelog": "https://github.com/vvb2060/zygisk_cacerts/raw/HEAD/README.md"
 }
