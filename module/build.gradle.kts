@@ -16,13 +16,8 @@ val verName = providers.exec {
 }.standardOutput.asText.get().trim()
 
 android {
-    compileSdk = 35
-    buildToolsVersion = "35.0.0"
-    ndkVersion = "27.0.11902837"
     namespace = "zygisk.cacerts"
     defaultConfig {
-        minSdk = 27
-        targetSdk = 35
         versionCode = verCode
         versionName = verName
         externalNativeBuild {
@@ -44,12 +39,12 @@ android {
         checkReleaseBuilds = false
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
     }
 }
 
-val zipAll = task("zipAll", Task::class) {
+val zipAll = tasks.register<Task>("zipAll") {
     group = rootProject.name
 }
 
@@ -110,5 +105,7 @@ androidComponents.onVariants { variant ->
         from(magiskDir)
     }
 
-    zipAll.dependsOn(zipTask)
+    zipAll.configure {
+        dependsOn(zipTask)
+    }
 }
